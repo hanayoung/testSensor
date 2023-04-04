@@ -41,34 +41,36 @@ class MainActivity : AppCompatActivity() {
 
         addBtn.setOnClickListener {
             val temp = Array<Double>(5,{Math.random()})
-            Log.d("changed input",temp[1].toString())
             input+=temp
             lifecycleScope.launch{
                 val data = lineChart.data
                 val dataSet = data.getDataSetByIndex(0)
 
+
                 for (i in input.indices) {
+
                     if (i < dataSet.entryCount) {
                         dataSet.getEntryForIndex(i).y = input[i].toFloat()
                     } else {
+                        delay(100)
                         dataSet.addEntry(Entry(i.toFloat(), input[i].toFloat()))
+                        data.notifyDataChanged()
                     }
+                    lineChart.notifyDataSetChanged()
+                    lineChart.setVisibleXRangeMaximum(4f)
+                    lineChart.moveViewToX(dataSet.entryCount.toFloat())
+                    lineChart.invalidate()
                 }
-
-                data.notifyDataChanged()
-
-
-                val visibleRange = 3f // 보여줄 x축 범위
-                if (dataSet.entryCount > visibleRange) {
-                    Log.d("entryCount",dataSet.entryCount.toString())
-                    lineChart.setVisibleXRangeMaximum(visibleRange)
-                    lineChart.moveViewToX(dataSet.entryCount - 5f)
-                } else {
-                    lineChart.setVisibleXRangeMaximum(visibleRange)
-                    lineChart.moveViewToX(0f)
-                }
-                lineChart.notifyDataSetChanged()
-                lineChart.invalidate()
+//
+//
+//                val visibleRange = 3f // 보여줄 x축 범위
+//                if (dataSet.entryCount > visibleRange) {
+//                    Log.d("entryCount",dataSet.entryCount.toString())
+//
+//                } else {
+//                    lineChart.setVisibleXRangeMaximum(visibleRange)
+//                    lineChart.moveViewToX(0f)
+//                }
 //            val temp = Array<Double>(5,{Math.random()})
 //            Log.d("changed input",temp[1].toString())
 ////            addEntry(input.size,temp.toInt(),lineChart)
@@ -130,7 +132,6 @@ class MainActivity : AppCompatActivity() {
 //                }
 //                coroutineClass.addData(temp)
             }
-            Log.d("input",input.size.toString())
         }
 
         startBtn.setOnClickListener {
