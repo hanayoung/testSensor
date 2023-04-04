@@ -18,6 +18,16 @@ class MainViewModel : ViewModel(), DataClient.OnDataChangedListener {
     private val _hr = MutableLiveData<Int>()
     val hr : LiveData<Int>
         get() = _hr
+    private val _changed = MutableLiveData<Boolean>(false)
+    val changed : LiveData<Boolean>
+    get() = _changed
+
+    init {
+        hr.observeForever {
+            value ->
+            _changed.value=true
+        }
+    }
     override fun onDataChanged(dataEvents: DataEventBuffer) {
        Log.d("datachanged","datachanged")
         viewModelScope.launch {
