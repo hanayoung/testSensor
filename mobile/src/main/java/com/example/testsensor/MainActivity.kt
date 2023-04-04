@@ -1,87 +1,188 @@
 package com.example.testsensor
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContract
-import androidx.activity.result.registerForActivityResult
 import androidx.activity.viewModels
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.health.connect.client.HealthConnectClient
-import androidx.health.connect.client.PermissionController
-import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.HeartRateRecord
-import androidx.health.connect.client.request.ReadRecordsRequest
-import androidx.health.connect.client.time.TimeRangeFilter
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
+import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 import com.google.android.gms.wearable.Wearable
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.time.*
-import java.util.*
+import kotlinx.coroutines.*
+
 
 class MainActivity : AppCompatActivity() {
     private val viewModel : MainViewModel by viewModels()
     private val dataClient by lazy { Wearable.getDataClient(this)}
-
-    val localeToday = LocalDate.now(ZoneId.of("Asia/Manila"))
-    val dawn = LocalTime.MIDNIGHT
-    var permission = false
-
-    val PERMISSIONS =
-        setOf(
-            HealthPermission.getReadPermission(HeartRateRecord::class),
-            HealthPermission.getWritePermission(HeartRateRecord::class)
-        )
-
+    var isRunning = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val permissionsLauncher = requestPermissionsActivityContract()
-        Log.d("permissionsLauncher",permissionsLauncher.toString())
 
         val text = findViewById<TextView>(R.id.hrValue)
-        val per = findViewById<Button>(R.id.per)
-        if(HealthConnectClient.isProviderAvailable(applicationContext)){
-            val healthConnectClient = HealthConnectClient.getOrCreate(applicationContext)
-            Log.d("healthconnect","client")
-//            lifecycleScope.launch{
-//                val granted = healthConnectClient.permissionController.getGrantedPermissions(PERMISSIONS)
-//                if (granted.containsAll(PERMISSIONS)) {
-//
-//                }
-//            }
-            per.setOnClickListener {
-                lifecycleScope.launch {
-                    if(hasAllPermissions(permissions = PERMISSIONS,healthConnectClient)){
-                        permission=true
-                        Log.d("permission",permission.toString())
-                    } }
+        val startBtn = findViewById<Button>(R.id.startBtn)
+        val lineChart = findViewById<LineChart>(R.id.linechart)
+        val addBtn = findViewById<Button>(R.id.addBtn)
+
+        var input = Array<Double>(5,{Math.random()})
+        Log.d("first input",input[1].toString())
+
+//        val coroutineClass = CoroutineClass(lineChart = lineChart,input=input)
+
+        viewModel.hr.observe(this, Observer {
+            text.text=viewModel.hr.value.toString()
+        })
+
+        addBtn.setOnClickListener {
+            val temp = Array<Double>(5,{Math.random()})
+            Log.d("changed input",temp[1].toString())
+//            addEntry(input.size,temp.toInt(),lineChart)
+//            input+=temp
+            lifecycleScope.launch{
+                if(!isRunning){
+                    lifecycle.coroutineScope.launch {
+                        val entries = ArrayList<Entry>()
+                        // Entry 배열 초기값 입력
+                        entries.add(Entry(0F, 0F))
+                        // 그래프 구현을 위한 LineDataSet 생성
+                        val dataset = LineDataSet(entries, "input")
+                        // 그래프 data 생성 -> 최종 입력 데이터
+                        val data = LineData(dataset)
+                        // chart.xml에 배치된 lineChart에 데이터 연결
+                        lineChart.data = data
+
+                        // 그래프 생성
+                        lineChart.animateXY(1, 1)
+
+                        for (i in input.indices) {
+                            delay(100)
+                            data.addEntry(Entry(i.toFloat(), input[i].toFloat()), 0)
+                            data.notifyDataChanged()
+                            lineChart.apply {
+                                notifyDataSetChanged()
+                                moveViewToX(data.entryCount.toFloat())
+                                setVisibleXRangeMaximum(4f)
+                                invalidate()
+                            }
+                        }
+                    }
+                    isRunning=false
+                }
+//                coroutineClass.addData(temp)
             }
-
-           if(permission){
-               viewModel.hr.observe(this, Observer {
-                   text.text=viewModel.hr.value.toString()
-                   lifecycleScope.launch(Dispatchers.IO){
-                       writeData(healthConnectClient = healthConnectClient)
-                       Log.d("write success","write checking")
-                   }
-               })
-               val btn = findViewById<Button>(R.id.button)
-               btn.setOnClickListener {
-                   lifecycleScope.launch(Dispatchers.IO) {
-                       readHeartRatesByTimeRangeDay(healthConnectClient, LocalDateTime.of(localeToday, dawn), LocalDateTime.now())
-                   }
-               }
-           }
-
+            Log.d("input",input.size.toString())
         }
 
+        startBtn.setOnClickListener {
+            if(!isRunning){
+                lifecycle.coroutineScope.launch {
+                    val entries = ArrayList<Entry>()
+                    // Entry 배열 초기값 입력
+                    entries.add(Entry(0F, 0F))
+                    // 그래프 구현을 위한 LineDataSet 생성
+                    val dataset = LineDataSet(entries, "input")
+                    // 그래프 data 생성 -> 최종 입력 데이터
+                    val data = LineData(dataset)
+                    // chart.xml에 배치된 lineChart에 데이터 연결
+                    lineChart.data = data
+
+                    // 그래프 생성
+                    lineChart.animateXY(1, 1)
+
+                    for (i in input.indices) {
+                        delay(100)
+                        data.addEntry(Entry(i.toFloat(), input[i].toFloat()), 0)
+                        data.notifyDataChanged()
+                        lineChart.apply {
+                            notifyDataSetChanged()
+                            moveViewToX(data.entryCount.toFloat())
+                            setVisibleXRangeMaximum(4f)
+                            invalidate()
+                        }
+                    }
+                }
+                isRunning=false
+            }
+//            coroutineClass.start()
+
+        }
     }
+    private fun addEntry(x: Int, y:Int, lineChart: LineChart) {
+        val data: LineData = lineChart.data
+        var set = data.getDataSetByIndex(100)
+//        if (set == null) {
+//            set = createSet()
+//            data.addDataSet(set)
+//        }
+        data.addEntry(Entry(x.toFloat(),y.toFloat()), 100)
+        data.notifyDataChanged()
+        lineChart.notifyDataSetChanged()
+    }
+
+//    inner class CoroutineClass(
+//        private val lineChart: LineChart,
+//        private var input: Array<Double>
+//    ) {
+//        private var isRunning = false
+//        private var job: Job? = null
+//
+//        fun start() {
+//            if (isRunning) return
+//            isRunning = true
+//
+//            job = GlobalScope.launch(Dispatchers.IO) {
+//                val entries = ArrayList<Entry>()
+//                entries.add(Entry(0F, 0F))
+//                val dataSet = LineDataSet(entries, "input")
+//                val data = LineData(dataSet)
+//                withContext(Dispatchers.Main) {
+//                    lineChart.data = data
+//                    lineChart.animateXY(1, 1)
+//                }
+//
+//                for (i in input.indices) {
+//                    delay(100)
+//                    withContext(Dispatchers.Main) {
+//                        data.addEntry(Entry(i.toFloat(), input[i].toFloat()), 0)
+//                        data.notifyDataChanged()
+//                        lineChart.notifyDataSetChanged()
+//                        lineChart.moveViewToX(data.entryCount.toFloat())
+//                        lineChart.setVisibleXRangeMaximum(4f)
+//                        lineChart.invalidate()
+//                    }
+//                }
+//                isRunning = false
+//            }
+//        }
+//
+//        suspend fun addData(newInput: Array<Double>) = withContext(Dispatchers.Main) {
+//            input += newInput
+//            val data = lineChart.data ?: return@withContext
+//            val dataSet = data.getDataSetByIndex(0) ?: return@withContext
+//
+//            for (i in input.indices) {
+//                if (i < dataSet.entryCount) {
+//                    dataSet.getEntryForIndex(i).y = input[i].toFloat()
+//                } else {
+//                    dataSet.addEntry(Entry(i.toFloat(), input[i].toFloat()))
+//                }
+//            }
+//
+//            data.notifyDataChanged()
+//            lineChart.notifyDataSetChanged()
+//            lineChart.moveViewToX(data.entryCount.toFloat())
+//            lineChart.setVisibleXRangeMaximum(4f)
+//            lineChart.invalidate()
+//        }
+//    }
+
+
     override fun onResume() {
         super.onResume()
         dataClient.addListener(viewModel)
