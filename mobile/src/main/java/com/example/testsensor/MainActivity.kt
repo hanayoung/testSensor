@@ -42,38 +42,92 @@ class MainActivity : AppCompatActivity() {
         addBtn.setOnClickListener {
             val temp = Array<Double>(5,{Math.random()})
             Log.d("changed input",temp[1].toString())
-//            addEntry(input.size,temp.toInt(),lineChart)
-//            input+=temp
+            input+=temp
             lifecycleScope.launch{
-                if(!isRunning){
-                    lifecycle.coroutineScope.launch {
-                        val entries = ArrayList<Entry>()
-                        // Entry 배열 초기값 입력
-                        entries.add(Entry(0F, 0F))
-                        // 그래프 구현을 위한 LineDataSet 생성
-                        val dataset = LineDataSet(entries, "input")
-                        // 그래프 data 생성 -> 최종 입력 데이터
-                        val data = LineData(dataset)
-                        // chart.xml에 배치된 lineChart에 데이터 연결
-                        lineChart.data = data
+                val data = lineChart.data
+                val dataSet = data.getDataSetByIndex(0)
 
-                        // 그래프 생성
-                        lineChart.animateXY(1, 1)
-
-                        for (i in input.indices) {
-                            delay(100)
-                            data.addEntry(Entry(i.toFloat(), input[i].toFloat()), 0)
-                            data.notifyDataChanged()
-                            lineChart.apply {
-                                notifyDataSetChanged()
-                                moveViewToX(data.entryCount.toFloat())
-                                setVisibleXRangeMaximum(4f)
-                                invalidate()
-                            }
-                        }
+                for (i in input.indices) {
+                    if (i < dataSet.entryCount) {
+                        dataSet.getEntryForIndex(i).y = input[i].toFloat()
+                    } else {
+                        dataSet.addEntry(Entry(i.toFloat(), input[i].toFloat()))
                     }
-                    isRunning=false
                 }
+
+                data.notifyDataChanged()
+
+
+                val visibleRange = 3f // 보여줄 x축 범위
+                if (dataSet.entryCount > visibleRange) {
+                    Log.d("entryCount",dataSet.entryCount.toString())
+                    lineChart.setVisibleXRangeMaximum(visibleRange)
+                    lineChart.moveViewToX(dataSet.entryCount - 5f)
+                } else {
+                    lineChart.setVisibleXRangeMaximum(visibleRange)
+                    lineChart.moveViewToX(0f)
+                }
+                lineChart.notifyDataSetChanged()
+                lineChart.invalidate()
+//            val temp = Array<Double>(5,{Math.random()})
+//            Log.d("changed input",temp[1].toString())
+////            addEntry(input.size,temp.toInt(),lineChart)
+//            input+=temp
+//            lifecycleScope.launch{
+//                val data = lineChart.data
+//                val dataSet = data.getDataSetByIndex(0)
+//
+//                for (i in input.indices) {
+//                    if (i < dataSet.entryCount) {
+//                        dataSet.getEntryForIndex(i).y = input[i].toFloat()
+//                    } else {
+//                        dataSet.addEntry(Entry(i.toFloat(), input[i].toFloat()))
+//                    }
+//                }
+//
+//                data.notifyDataChanged()
+//                lineChart.notifyDataSetChanged()
+//                val visibleRange = 3f // 보여줄 x축 범위
+//                if (dataSet.entryCount > visibleRange) {
+//                    lineChart.setVisibleXRangeMaximum(visibleRange)
+//                    lineChart.moveViewToX(dataSet.entryCount - 5f)
+//                } else {
+//                    lineChart.setVisibleXRangeMaximum(visibleRange)
+//                    lineChart.moveViewToX(0f)
+//                }
+////                lineChart.moveViewToX(data.entryCount.toFloat() - 6)
+////                lineChart.setVisibleXRangeMaximum(4f)
+//                lineChart.invalidate()
+
+//                if(!isRunning){
+//                    lifecycle.coroutineScope.launch {
+//                        val entries = ArrayList<Entry>()
+//                        // Entry 배열 초기값 입력
+//                        entries.add(Entry(0F, 0F))
+//                        // 그래프 구현을 위한 LineDataSet 생성
+//                        val dataset = LineDataSet(entries, "input")
+//                        // 그래프 data 생성 -> 최종 입력 데이터
+//                        val data = LineData(dataset)
+//                        // chart.xml에 배치된 lineChart에 데이터 연결
+//                        lineChart.data = data
+//
+//                        // 그래프 생성
+//                        lineChart.animateXY(1, 1)
+//
+//                        for (i in input.indices) {
+//                            delay(100)
+//                            data.addEntry(Entry(i.toFloat(), input[i].toFloat()), 0)
+//                            data.notifyDataChanged()
+//                            lineChart.apply {
+//                                notifyDataSetChanged()
+//                                moveViewToX(data.entryCount.toFloat())
+//                                setVisibleXRangeMaximum(4f)
+//                                invalidate()
+//                            }
+//                        }
+//                    }
+//                    isRunning=false
+//                }
 //                coroutineClass.addData(temp)
             }
             Log.d("input",input.size.toString())
@@ -97,10 +151,13 @@ class MainActivity : AppCompatActivity() {
 
                     for (i in input.indices) {
                         delay(100)
+                        Log.d("moveViewtoX","here")
                         data.addEntry(Entry(i.toFloat(), input[i].toFloat()), 0)
                         data.notifyDataChanged()
+
                         lineChart.apply {
                             notifyDataSetChanged()
+                            Log.d("moveViewtoX","after")
                             moveViewToX(data.entryCount.toFloat())
                             setVisibleXRangeMaximum(4f)
                             invalidate()
