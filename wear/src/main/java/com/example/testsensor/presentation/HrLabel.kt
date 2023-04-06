@@ -68,7 +68,9 @@ fun HrLabel(
         )
         Text(
             text = text,
-            style = MaterialTheme.typography.display1
+            style = MaterialTheme.typography.display1,
+            color = Color.Black
+
         )
     }
 }

@@ -7,8 +7,13 @@
 package com.example.testsensor.presentation
 
 import android.annotation.SuppressLint
+import android.app.Application
+import android.content.Context
+import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
+import android.view.Surface
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -38,6 +43,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.ExecutionException
 import kotlin.coroutines.cancellation.CancellationException
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.wear.compose.material.Scaffold
 
 class MainActivity : ComponentActivity() {
     private val dataClient by lazy { Wearable.getDataClient(this) }
@@ -45,13 +54,29 @@ class MainActivity : ComponentActivity() {
     private val nodeClient by lazy { Wearable.getNodeClient(this) }
 
     private val viewModel : MeasureDataViewModel by viewModels()
+    private lateinit var lightViewModel : LightSensorViewModel
+    private lateinit var hrViewModel : HrViewModel
+
     @SuppressLint("CoroutineCreationDuringComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val healthServicesRepository = (application as MainApplication).healthServicesRepository
 
+        val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        lightViewModel = ViewModelProvider(this,lightSensorViewModelFactory(sensorManager)).get(LightSensorViewModel::class.java)
+        hrViewModel = ViewModelProvider(this,HrViewModelFactory(sensorManager = sensorManager)).get(HrViewModel::class.java)
         setContent {
-            MeasureDataApp(healthServicesRepository = healthServicesRepository, dataClient = dataClient)
+//            AnotherDataApp(healthServicesRepository = healthServicesRepository, dataClient = dataClient)
+
+            HrScreen(context = this)
+            LightSensorApp(sensorManager,dataClient,this)
+
+//            LightSensorScreen(context = this)
+
+//            MeasureDataApp(healthServicesRepository = healthServicesRepository, dataClient = dataClient)
+
+            lightViewModel.updateLightSensorData(dataClient = dataClient, light = lightViewModel.light.value)
+            hrViewModel.updateHrData(dataClient,hrViewModel.hr.value)
             lifecycleScope.launch {
                 try {
                     val nodes = nodeClient.connectedNodes.await()
@@ -67,7 +92,7 @@ class MainActivity : ComponentActivity() {
                         Log.d(TAG, "Starting activity requests sent successfully")
                     }
                 } catch (cancellationException: CancellationException) {
-
+                    Log.d("sensorManager","cancel")
                     throw cancellationException
                 } catch (exception: Exception) {
                     Log.d(TAG, "Starting activity failed: $exception")
@@ -75,6 +100,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+//        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
 
     }
     companion object {

@@ -42,7 +42,13 @@ class MeasureDataViewModel(
     val availability: MutableState<DataTypeAvailability> =
         mutableStateOf(DataTypeAvailability.UNKNOWN)
 
+    val vo2 : MutableState<Double> = mutableStateOf(0.0)
+    val vo2Availability : MutableState<DataTypeAvailability> =
+        mutableStateOf(DataTypeAvailability.UNKNOWN)
+
     val uiState: MutableState<UiState> = mutableStateOf(UiState.Startup)
+
+    val vo2UiState : MutableState<UiState> = mutableStateOf(UiState.Startup)
 
     init {
         viewModelScope.launch {
@@ -50,6 +56,12 @@ class MeasureDataViewModel(
             uiState.value = if (supported) {
                 UiState.Supported
             } else {
+                UiState.NotSupported
+            }
+            val vo2Supported = healthServicesRepository.hasVo2Capability()
+            vo2UiState.value = if(vo2Supported){
+                UiState.Supported
+            }else{
                 UiState.NotSupported
             }
         }
@@ -67,6 +79,19 @@ class MeasureDataViewModel(
                                 }
                                 is MeasureMessage.MeasureAvailability -> {
                                     availability.value = measureMessage.availability
+                                }
+                            }
+                        }
+                    healthServicesRepository.vo2MeasureFlow()
+                        .takeWhile { enabled.value }
+                        .collect{ measureMessage ->
+                            when(measureMessage) {
+                                is MeasureMessage.MeasureData ->{
+                                    vo2.value = measureMessage.data.last().value
+                                    Log.d("vo2",vo2.value.toString())
+                                }
+                                is MeasureMessage.MeasureAvailability -> {
+                                    vo2Availability.value = measureMessage.availability
                                 }
                             }
                         }
