@@ -63,8 +63,8 @@ class MainActivity : ComponentActivity() {
         val healthServicesRepository = (application as MainApplication).healthServicesRepository
 
         val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        lightViewModel = ViewModelProvider(this,lightSensorViewModelFactory(sensorManager)).get(LightSensorViewModel::class.java)
-        hrViewModel = ViewModelProvider(this,HrViewModelFactory(sensorManager = sensorManager)).get(HrViewModel::class.java)
+        lightViewModel = ViewModelProvider(this,LightSensorViewModelFactory(this)).get(LightSensorViewModel::class.java)
+        hrViewModel = ViewModelProvider(this,HrViewModelFactory(this)).get(HrViewModel::class.java)
         setContent {
 //            AnotherDataApp(healthServicesRepository = healthServicesRepository, dataClient = dataClient)
 
@@ -75,7 +75,6 @@ class MainActivity : ComponentActivity() {
 
 //            MeasureDataApp(healthServicesRepository = healthServicesRepository, dataClient = dataClient)
 
-            lightViewModel.updateLightSensorData(dataClient = dataClient, light = lightViewModel.light.value)
             hrViewModel.updateHrData(dataClient,hrViewModel.hr.value)
             lifecycleScope.launch {
                 try {

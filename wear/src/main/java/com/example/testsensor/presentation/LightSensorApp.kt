@@ -10,13 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.TimeText
-import com.example.testsensor.presentation.data.HealthServicesRepository
 import com.example.testsensor.presentation.theme.TestSensorTheme
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.wearable.DataClient
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun LightSensorApp(
     sensorManager: SensorManager,
@@ -30,18 +26,26 @@ fun LightSensorApp(
         ) {
 
                 val viewModel: LightSensorViewModel = viewModel(
-                factory = lightSensorViewModelFactory(
-                   sensorManager=sensorManager
+                factory = LightSensorViewModelFactory(
+                   context = context
                 )
-            )
-                val enabled by viewModel.enabled.collectAsState()
+                )
+                val hrViewModel : HrViewModel = viewModel(
+                    factory = HrViewModelFactory(
+                        context = context
+                    )
+                )
+                val lightEnabled by viewModel.enabled.collectAsState()
+                val hrEnabled by hrViewModel.enabled.collectAsState()
                 LightSensorScreen(
                     context=context,
                     sensorManager = sensorManager,
-                    enabled = enabled,
-                    onButtonClick = { viewModel.toggleEnabled() }
+                    lightEnabled = lightEnabled,
+                    hrEnabled = hrEnabled,
+                    onButton1Click = { viewModel.toggleEnabled() },
+                    onButton2Click = { hrViewModel.toggleEnabled() }
                 )
-
+            viewModel.updateLightSensorData(dataClient = dataClient, light = viewModel.light.value)
 
         }
     }

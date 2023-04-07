@@ -1,9 +1,12 @@
 package com.example.testsensor.presentation
 
+import android.content.Context
+import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.health.services.client.data.DataTypeAvailability
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -15,19 +18,33 @@ import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutionException
 
 class LightSensorViewModel(
-    private val sensorManager: SensorManager
+    context:Context
 ) : ViewModel() {
-    val enabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
-
-    val light: MutableState<Double> = mutableStateOf(0.0)
-    val availability: MutableState<DataTypeAvailability> =
+        val enabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
+        val light: MutableState<Double> = mutableStateOf(0.0)
+        val availability: MutableState<DataTypeAvailability> =
         mutableStateOf(DataTypeAvailability.UNKNOWN)
-
+    init {
+        viewModelScope.launch {
+            enabled.collect {
+                if (it) {
+                    lightSensorFlow(context)
+                        .takeWhile { enabled.value }
+                        .collect{
+                            measureData ->
+                            Log.d("measureData",measureData.toString())
+                            light.value = measureData.toDouble()
+                        }
+                }
+            }
+        }
+    }
     fun updateLightSensorData(dataClient: DataClient, light: Double){
         viewModelScope.launch(Dispatchers.IO) {
             val putDataMapRequest = PutDataMapRequest.create("/light")
@@ -54,12 +71,12 @@ class LightSensorViewModel(
     }
 }
 
-class lightSensorViewModelFactory(
-    private val sensorManager: SensorManager
+class LightSensorViewModelFactory(
+    private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LightSensorViewModel::class.java)) {
-            return LightSensorViewModel(sensorManager) as T
+            return LightSensorViewModel(context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

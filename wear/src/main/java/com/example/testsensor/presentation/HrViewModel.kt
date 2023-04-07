@@ -1,6 +1,6 @@
 package com.example.testsensor.presentation
 
-import android.hardware.SensorManager
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -8,8 +8,6 @@ import androidx.health.services.client.data.DataTypeAvailability
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.testsensor.presentation.data.HealthServicesRepository
-import com.example.testsensor.presentation.data.MeasureMessage
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
@@ -20,13 +18,29 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutionException
 
 class HrViewModel(
-    private val sensorManager: SensorManager
+    context : Context
 ) : ViewModel() {
     val enabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     val hr: MutableState<Double> = mutableStateOf(0.0)
     val availability: MutableState<DataTypeAvailability> =
         mutableStateOf(DataTypeAvailability.UNKNOWN)
+
+    init {
+        viewModelScope.launch {
+            enabled.collect {
+                if (it) {
+                    hrFlow(context)
+                        .takeWhile { enabled.value }
+                        .collect{
+                                measureData ->
+                            Log.d("measureData",measureData.toString())
+                            hr.value = measureData.toDouble()
+                        }
+                }
+            }
+        }
+    }
 
     fun updateHrData(dataClient: DataClient, hr: Double){
         viewModelScope.launch(Dispatchers.IO) {
@@ -46,14 +60,21 @@ class HrViewModel(
             }
         }
     }
+    fun toggleEnabled() {
+        enabled.value = !enabled.value
+        // 로그찍기
+        if (!enabled.value) {
+            availability.value = DataTypeAvailability.UNKNOWN
+        }
+    }
 }
 
 class HrViewModelFactory(
-    private val sensorManager: SensorManager
+    private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HrViewModel::class.java)) {
-            return HrViewModel(sensorManager) as T
+            return HrViewModel(context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
