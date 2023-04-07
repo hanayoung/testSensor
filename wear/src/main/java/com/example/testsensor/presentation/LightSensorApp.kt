@@ -27,12 +27,14 @@ fun LightSensorApp(
 
                 val viewModel: LightSensorViewModel = viewModel(
                 factory = LightSensorViewModelFactory(
-                   context = context
+                    context = context,
+                    dataClient = dataClient
                 )
                 )
                 val hrViewModel : HrViewModel = viewModel(
                     factory = HrViewModelFactory(
-                        context = context
+                        context = context,
+                        dataClient = dataClient
                     )
                 )
                 val lightEnabled by viewModel.enabled.collectAsState()
@@ -41,11 +43,11 @@ fun LightSensorApp(
                     context=context,
                     sensorManager = sensorManager,
                     lightEnabled = lightEnabled,
-                    hrEnabled = hrEnabled,
+//                    hrEnabled = hrEnabled,
                     onButton1Click = { viewModel.toggleEnabled() },
-                    onButton2Click = { hrViewModel.toggleEnabled() }
+//                    onButton2Click = { hrViewModel.toggleEnabled() },
+                    dataClient=dataClient
                 )
-            viewModel.updateLightSensorData(dataClient = dataClient, light = viewModel.light.value)
 
         }
     }

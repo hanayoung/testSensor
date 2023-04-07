@@ -63,19 +63,19 @@ class MainActivity : ComponentActivity() {
         val healthServicesRepository = (application as MainApplication).healthServicesRepository
 
         val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        lightViewModel = ViewModelProvider(this,LightSensorViewModelFactory(this)).get(LightSensorViewModel::class.java)
-        hrViewModel = ViewModelProvider(this,HrViewModelFactory(this)).get(HrViewModel::class.java)
+        lightViewModel = ViewModelProvider(this,LightSensorViewModelFactory(this,dataClient)).get(LightSensorViewModel::class.java)
+        hrViewModel = ViewModelProvider(this,HrViewModelFactory(this,dataClient)).get(HrViewModel::class.java)
         setContent {
 //            AnotherDataApp(healthServicesRepository = healthServicesRepository, dataClient = dataClient)
 
-            HrScreen(context = this)
+//            HrScreen(context = this)
             LightSensorApp(sensorManager,dataClient,this)
 
 //            LightSensorScreen(context = this)
 
-//            MeasureDataApp(healthServicesRepository = healthServicesRepository, dataClient = dataClient)
+            MeasureDataApp(healthServicesRepository = healthServicesRepository, dataClient = dataClient)
 
-            hrViewModel.updateHrData(dataClient,hrViewModel.hr.value)
+//
             lifecycleScope.launch {
                 try {
                     val nodes = nodeClient.connectedNodes.await()
@@ -98,6 +98,7 @@ class MainActivity : ComponentActivity() {
 
                 }
             }
+
         }
 //        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }

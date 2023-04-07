@@ -24,7 +24,8 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutionException
 
 class LightSensorViewModel(
-    context:Context
+    context:Context,
+    dataClient: DataClient
 ) : ViewModel() {
         val enabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
         val light: MutableState<Double> = mutableStateOf(0.0)
@@ -40,6 +41,7 @@ class LightSensorViewModel(
                             measureData ->
                             Log.d("measureData",measureData.toString())
                             light.value = measureData.toDouble()
+                            updateLightSensorData(dataClient = dataClient,light.value)
                         }
                 }
             }
@@ -72,11 +74,12 @@ class LightSensorViewModel(
 }
 
 class LightSensorViewModelFactory(
-    private val context: Context
+    private val context: Context,
+    private val dataClient: DataClient
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LightSensorViewModel::class.java)) {
-            return LightSensorViewModel(context) as T
+            return LightSensorViewModel(context, dataClient = dataClient) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

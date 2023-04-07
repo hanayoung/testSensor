@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.Text
 import com.example.testsensor.R
+import com.google.android.gms.wearable.DataClient
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
@@ -28,18 +29,21 @@ fun LightSensorScreen(
 context: Context,
 sensorManager: SensorManager,
 lightEnabled: Boolean,
-hrEnabled: Boolean,
+//hrEnabled: Boolean,
 onButton1Click: () -> Unit,
-onButton2Click: () -> Unit
+//onButton2Click: () -> Unit,
+dataClient : DataClient
 ) {
     val viewModel: LightSensorViewModel = viewModel(
         factory = LightSensorViewModelFactory(
-            context = context
+            context = context,
+            dataClient = dataClient
         )
     )
     val hrViewModel : HrViewModel = viewModel(
         factory = HrViewModelFactory(
-            context = context
+            context = context,
+            dataClient = dataClient
         )
     )
     // on below line we are specifying theme as scaffold.
@@ -109,20 +113,20 @@ onButton2Click: () -> Unit
     ) {
         // on below line we are creating a simple text
         // in which we are displaying a text as Object is
-        Button(
-            modifier = Modifier.fillMaxWidth(0.5f),
-            onClick = {
-                Log.d("permission", "is granted")
-                onButton2Click()
-            }
-        ) {
-            val hrButtonTextId = if (hrEnabled) {
-                R.string.stop
-            } else {
-                R.string.start
-            }
-            Text(stringResource(hrButtonTextId))
-        }
+//        Button(
+//            modifier = Modifier.fillMaxWidth(0.5f),
+//            onClick = {
+//                Log.d("permission", "is granted")
+//                onButton2Click()
+//            }
+//        ) {
+//            val hrButtonTextId = if (hrEnabled) {
+//                R.string.stop
+//            } else {
+//                R.string.start
+//            }
+//            Text(stringResource(hrButtonTextId))
+//        }
         Text(
 //                "Object is", Modifier.padding(5.dp), Color.Black, 40.sp,
             // on below line we are setting text color

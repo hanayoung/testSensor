@@ -18,7 +18,8 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutionException
 
 class HrViewModel(
-    context : Context
+    context : Context,
+    dataClient: DataClient
 ) : ViewModel() {
     val enabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -36,6 +37,7 @@ class HrViewModel(
                                 measureData ->
                             Log.d("measureData",measureData.toString())
                             hr.value = measureData.toDouble()
+                            updateHrData(dataClient,hr.value)
                         }
                 }
             }
@@ -70,11 +72,12 @@ class HrViewModel(
 }
 
 class HrViewModelFactory(
-    private val context: Context
+    private val context: Context,
+    private val dataClient: DataClient
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HrViewModel::class.java)) {
-            return HrViewModel(context) as T
+            return HrViewModel(context,dataClient) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
